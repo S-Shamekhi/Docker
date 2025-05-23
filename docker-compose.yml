@@ -1,0 +1,29 @@
+version: '3'
+
+services:
+  db:
+    image: postgres
+    environment:
+      POSTGRES_DB: notesdb
+      POSTGRES_USER: notesuser
+      POSTGRES_PASSWORD: notespass
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  web:
+    build: .
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/app
+    ports:
+      - "9050:8000"
+    depends_on:
+      - db
+    environment:
+      - DATABASE_NAME=notesdb
+      - DATABASE_USER=notesuser
+      - DATABASE_PASSWORD=notespass
+      - DATABASE_HOST=db
+
+volumes:
+  postgres_data:
