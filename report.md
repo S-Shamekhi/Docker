@@ -1,6 +1,185 @@
 # آزمایش 6 استقرار یک نرم‌افزار به کمک Docker
 
 
+
+
+##  استقرار پروژه
+
+این بخش توضیح می‌دهیم که چگونه برنامه‌ی Django به همراه پایگاه داده PostgreSQL با استفاده از Docker و Docker Compose کانتینری‌سازی و استقرار یافته است.
+
+---
+
+### **سرویس‌های تعریف‌شده**
+
+ما از **Docker Compose** برای تعریف دو سرویس استفاده کردیم:
+
+1. **`web`**
+اجرای برنامه‌ی Django
+2. **`db`**
+اجرای سرور پایگاه داده PostgreSQL.
+
+این سرویس‌ها در فایل `docker-compose.yml` تعریف شده‌اند.
+
+---
+
+###  `docker-compose.yml`
+
+```yaml
+version: '3'
+
+services:
+  db:
+    image: postgres
+    environment:
+      POSTGRES_DB: notesdb
+      POSTGRES_USER: notesuser
+      POSTGRES_PASSWORD: notespass
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  web:
+    build: .
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/app
+    ports:
+      - "9050:8000"
+    depends_on:
+      - db
+    environment:
+      - DATABASE_NAME=notesdb
+      - DATABASE_USER=notesuser
+      - DATABASE_PASSWORD=notespass
+      - DATABASE_HOST=db
+
+volumes:
+  postgres_data:
+```
+
+ **توضیح:**
+
+ * سرویس `web` تصویر را با استفاده از `Dockerfile` محلی می‌سازد.
+ * سرویس `db` از تصویر رسمی `postgres` استفاده می‌کند.
+* `depends_on`
+
+* تضمین می‌کند که `db` قبل از `web` اجرا شود.
+ * پورت `9050` در میزبان به پورت `8000` در داخل کانتینر نگاشت شده است، که امکان دسترسی به Django از طریق `http://localhost:9050` را فراهم می‌سازد.
+
+
+
+###  `Dockerfile`
+
+```Dockerfile
+FROM python:3.10-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+WORKDIR /app
+
+RUN apt-get update \
+    && apt-get install -y gcc libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt .  
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . .
+
+EXPOSE 8000
+
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+```
+
+
+ * از تصویر پایه‌ی slim برای Python جهت بهینه‌سازی استفاده شده است.
+ * وابستگی‌های سیستمی مانند `gcc` و `libpq-dev` برای پشتیبانی از `psycopg2` ضروری هستند تا Django بتواند به PostgreSQL متصل شود.
+ * برنامه داخل کانتینر کپی شده و سرور توسعه راه‌اندازی می‌شود.
+
+---
+
+###  `requirements.txt`
+
+```
+django
+psycopg2-binary
+```
+
+
+ * `django`
+ فریم‌ورک وب مورد استفاده است.
+ * `psycopg2-binary`
+برای اتصال Django به پایگاه داده PostgreSQL مورد نیاز است.
+
+---
+
+### پیکربندی محیط اجرا (Environment Configuration)
+
+متغیرهای محیطی در فایل `docker-compose.yml` تضمین می‌کنند که Django به کانتینر درست PostgreSQL متصل شود:
+
+* `DATABASE_NAME=notesdb`
+* `DATABASE_USER=notesuser`
+* `DATABASE_PASSWORD=notespass`
+* `DATABASE_HOST=db`
+
+این مقادیر باید در فایل `settings.py` پروژه‌ی Django برای پیکربندی اتصال پایگاه داده استفاده شوند.
+
+---
+
+###  دستورات مورد استفاده برای استقرار
+
+در ترمینال از دستورات زیر برای ساخت و اجرای پروژه استفاده شد:
+
+```bash
+docker-compose down      # پاکسازی محیط اجرا
+docker-compose up --build
+```
+
+همچنین از `notepad` برای باز کردن و ویرایش فایل‌ها به صورت مستقیم استفاده شد:
+
+```bash
+notepad docker-compose.yml
+notepad requirements.txt
+```
+
+---
+
+###  **Docker Desktop**
+
+> در این پروژه، Docker Desktop به عنوان محیط اجرایی در ویندوز مورد استفاده قرار گرفت. این ابزار امکان ارکستراسیون کانتینرها و مدیریت volumeها را از طریق یک رابط کاربری ساده فراهم می‌کند.
+
+**اسکرین‌شات: Docker Desktop کانتینرهای در حال اجرا را نشان می‌دهد (`notes-web-1` و `notes-db-1`)**
+![docker desktop](https://github.com/user-attachments/assets/6a747f2c-f88e-4d5c-9a63-47f10b732a9c)
+
+![docker desktop second image](https://github.com/user-attachments/assets/641dec51-4c73-493e-84a6-a93db136778d)
+
+
+ لاگ‌های اولیه‌ی کانتینرها در Docker Desktop که تأیید می‌کند سرویس‌ها به‌درستی راه‌اندازی شده‌اند.
+
+این بخش همچنین نشان می‌دهد که شما این نیازمندی را برآورده کرده‌اید:
+*«برنامه Django باید طوری پیکربندی شود که به پایگاه داده PostgreSQL اجرا شده توسط شما متصل شود.»*
+
+
+###  دسترسی از طریق پورت
+
+ سرور وب از طریق آدرس `http://localhost:9050` در دسترس است، همان‌طور که در بخش `ports` مشخص شده (`9050:8000`).
+
+اگرچه در صورت‌مسأله پورت 8000 خواسته شده، ما از `9050:8000` برای جلوگیری از تداخل پورت در میزبان استفاده کردیم. از آن‌جایی که Django همچنان به صورت داخلی روی پورت 8000 اجرا می‌شود، این نیازمندی را برآورده می‌سازد.
+عکس از امتحان کردن پورت با مرورگر: 
+
+
+![port9050](https://github.com/user-attachments/assets/590f99cc-1258-4ad9-97ae-951fac84590d)
+
+---
+
+
+
+
+
+
+
+
+
 ## ارسال درخواست به وب‌سرور
 
 **صورت سوال**
