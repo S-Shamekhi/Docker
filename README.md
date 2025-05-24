@@ -1,4 +1,5 @@
 # Notes project
+See report.md for full lab documentation and results
 
 ## Requirements
 - Python3
