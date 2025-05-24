@@ -13,6 +13,201 @@
 درخواست ارسال شده و خروجی دریافت شده را برای همه گام‌های بالا در گزارش خود قرار دهید.
 **پاسخ سوال**
 
+
+
+
+
+
+ما از **Postman** برای تست کردن نقطه‌های پایانی API طبق نیاز استفاده کردیم. در اینجا خلاصه‌ای از درخواست‌های ارسال‌شده به همراه توضیحات و پاسخ‌های سرور آمده است:
+
+###  1. **ایجاد یک کاربر (user42 با رمز عبور mystrongpass)**
+
+**endpoint**
+
+```http
+http://localhost:9050/users/create/
+
+```
+
+
+> برای ایجاد یک کاربر با استفاده از Postman، نمای `user_create` در فایل `apps/user/views.py` را بررسی می کنیم و متوجه شدیم داده‌ها با `request.POST` خوانده می‌شوند. این به این معناست که API داده‌ها را در فرمت فرم-انکودشده (مشابه فرم‌های HTML) انتظار دارد. بنابراین وقتی JSON ارسال می کردیم، نتوانست آن را پردازش کند و خطا ی  "Invalid data" می داد.
+
+>
+> بنابراین یک درخواست `POST` به آدرس `http://localhost:9050/users/create/` با داده‌های `x-www-form-urlencoded` ارسال کردیم. این فرمت داده‌ها را به صورت کلید-مقدار کدگذاری می‌کند، مانند:
+
+ ```
+ username: user42  
+ password: mystrongpass  
+ email: user42@example.com
+```
+
+ پاسخ سرور این بود:
+**server response:**
+
+ ```json
+ {
+   "id": 3,
+   "username": "user42"
+ }
+ ```
+
+ که نشان‌دهنده موفقیت‌آمیز بودن عملیات ایجاد کاربر است.
+
+
+**screenshot:**
+![create user](https://github.com/user-attachments/assets/b0b6c76a-b36f-4d8b-925b-ed7be91aba6c)
+
+---
+
+###  2. **ورود به حساب login user42**
+
+**endpoint:**
+
+```http
+POST http://localhost:9050/users/login/
+```
+
+**body (x-www-form-urlencoded):**
+
+```
+username: user42  
+password: mystrongpass
+```
+
+**server response:**
+
+```json
+{
+  "message": "Login successful"
+}
+```
+
+**توضیح:**
+
+نمای `login_func` در فایل `apps/user/views.py` را بررسی کردیم و شامل خطوط زیر بود:
+
+```python
+username = request.POST.get('username')
+password = request.POST.get('password')
+user = authenticate(request, username=username, password=password)
+```
+
+* سرور انتظار داده‌های فرم-انکودشده (`x-www-form-urlencoded`) را دارد، نه JSON.
+* فیلدهای `username` و `password` باید به صورت key-value در بدنه درخواست ارسال شوند.
+  **screenshot:**
+  ![login user](https://github.com/user-attachments/assets/fb4120ec-b010-46a0-bda3-138f87fc5465)
+
+
+###  3. **ایجاد یادداشت برای user42**
+
+#### یادداشت اول
+
+**endpoint:**
+
+```http
+POST http://localhost:9050/notes/create/
+```
+
+**body (x-www-form-urlencoded):**
+
+```
+title: title1
+body: body1
+```
+
+**server response:**
+
+```json
+{
+    "id": 1,
+    "title": "title1",
+    "body": "body1",
+    "create_time": "2025-05-23T23:08:04.760Z"
+}
+```
+  **screenshot:**
+![create notes 1](https://github.com/user-attachments/assets/aebad798-c013-453a-8fb6-0b7a58bfb221)
+  
+
+#### یادداشت دوم
+مشابه یاداشت اول فقط در key -value برای بدنه مقدایر زیر را استفاده می کنیم : 
+**body (x-www-form-urlencoded):**
+
+```
+title: title2
+body: body2
+```
+
+**server response:**
+
+```json
+{
+    "id": 2,
+    "title": "title2",
+    "body": "body2",
+    "create_time": "2025-05-23T23:10:45.608Z"
+}
+
+```
+  **screenshot:**
+  ![create notes 2](https://github.com/user-attachments/assets/c0545740-5fb7-42ed-9ce0-8252dec9f182)
+
+
+
+
+###  4. **دریافت یادداشت‌های user42**
+
+**endpoint:**
+
+```http
+GET http://localhost:9050/notes/
+```
+
+**server response:**
+
+```json
+[
+    {
+        "id": 1,
+        "title": "title1",
+        "body": "body1",
+        "create_time": "2025-05-23T23:08:04.760Z"
+    },
+    {
+        "id": 2,
+        "title": "title2",
+        "body": "body2",
+        "create_time": "2025-05-23T23:10:45.608Z"
+    }
+]
+
+```
+**screenshot:**
+![get notes](https://github.com/user-attachments/assets/5cad8f55-3a45-4c8d-9a92-8e3706882e62)
+
+
+**توضیح:**
+
+سیستم به درستی تنها یادداشت‌های مربوط به کاربر احراز هویت‌شده را باز می‌گرداند.
+با بررسی نمای `note_create` در فایل `apps/note/views.py` متوجه میشویم که یادداشت‌ها مختص کاربران هستند.
+با استفاده از کد زیر هر یادداشت را به کاربر واردشده اختصاص می‌دهد:
+
+ ```python
+ note.user = request.user
+ ```
+
+تضمین می‌کند که یادداشت‌ها به کاربر صحیح (مثلاً `user42`) مرتبط هستند. وقتی یادداشت‌ها را با استفاده از:
+
+ ```
+ GET http://localhost:9050/notes/
+ ```
+
+ دریافت می کنیم، پاسخ فقط یادداشت‌های ایجادشده توسط کاربر فعلی احراز هویت‌شده را بازگرداند.
+
+---
+
+
+
 ## تعامل با داکر
 **صورت سوال**
 
