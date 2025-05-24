@@ -37,8 +37,10 @@ docker images
 `notes-web`:
 > *  تصویری سفارشی که برای اپلیکیشن Django ما ساخته شده است.
 `postgres`:
+
 > *  تصویر رسمی PostgreSQL که برای سرویس پایگاه‌داده استفاده شده است.
 `python:3.10-slim`:
+
 > *  تصویر پایه‌ای که در Dockerfile برای ساخت تصویر `notes-web` استفاده شده است.
 
 > تصاویر دیگر مانند `hello-world`، `node` یا `ce441-proj2-image` به این آزمایش مربوط نیستند.
