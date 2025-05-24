@@ -131,7 +131,7 @@ psycopg2-binary
 در ترمینال از دستورات زیر برای ساخت و اجرای پروژه استفاده شد:
 
 ```bash
-docker-compose down      # پاکسازی محیط اجرا
+docker-compose down      
 docker-compose up --build
 ```
 
