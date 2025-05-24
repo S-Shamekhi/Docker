@@ -92,6 +92,7 @@ user = authenticate(request, username=username, password=password)
 
 * سرور انتظار داده‌های فرم-انکودشده (`x-www-form-urlencoded`) را دارد، نه JSON.
 * فیلدهای `username` و `password` باید به صورت key-value در بدنه درخواست ارسال شوند.
+
   **screenshot:**
   ![login user](https://github.com/user-attachments/assets/fb4120ec-b010-46a0-bda3-138f87fc5465)
 
