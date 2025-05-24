@@ -303,7 +303,9 @@ body: body1
     "create_time": "2025-05-23T23:08:04.760Z"
 }
 ```
-  **screenshot:**
+**screenshot:**
+
+
 ![create notes 1](https://github.com/user-attachments/assets/aebad798-c013-453a-8fb6-0b7a58bfb221)
   
 
@@ -328,6 +330,7 @@ body: body2
 
 ```
   **screenshot:**
+  
   ![create notes 2](https://github.com/user-attachments/assets/c0545740-5fb7-42ed-9ce0-8252dec9f182)
 
 
@@ -361,6 +364,8 @@ GET http://localhost:9050/notes/
 
 ```
 **screenshot:**
+
+
 ![get notes](https://github.com/user-attachments/assets/5cad8f55-3a45-4c8d-9a92-8e3706882e62)
 
 
